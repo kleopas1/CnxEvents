@@ -1,11 +1,46 @@
 <div class="day-view">
-    {{-- Header row --}}
-    <div class="day-row">
-        <div class="time-slot-label" style="background: #3c8dbc; border-color: #2e6da4;"></div>
-        <div class="day-header {{ $isToday ? 'today' : '' }}">
-            {{ $currentDate->format('l, F j, Y') }}
+
+    {{-- STICKY HEADER --}}
+    <div class="day-sticky">
+
+        {{-- Header row --}}
+        <div class="day-row day-header-row">
+            <div class="time-slot-label"></div>
+            <div class="day-header {{ $isToday ? 'today' : '' }}">
+                {{ $currentDate->format('l, F j, Y') }}
+            </div>
         </div>
+        
+        {{-- All-day events row --}}
+        <div class="day-row day-allday">
+            <div class="time-slot-label">ALL DAY</div>
+            <div class="day-allday-cell {{ $isToday ? 'today' : '' }}">
+                @foreach($dayEvents->where('all_day', true) as $event)
+                    @php
+                        $venueColor = $event->venue ? $event->venue->color : '#3c8dbc';
+                        $statusClass = strtolower($event->status) === 'request' ? 'event-request' : '';
+                        
+                        if (strtolower($event->status) === 'request') {
+                            $backgroundStyle = "background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.3) 10px, rgba(255,255,255,0.3) 20px), {$venueColor};";
+                        } else {
+                            $backgroundStyle = "background-color: {$venueColor};";
+                        }
+                    @endphp
+                    <a href="#" 
+                       class="day-allday-event {{ $statusClass }} view-event-btn"
+                       data-event-id="{{ $event->id }}"
+                       style="{{ $backgroundStyle }}"
+                       title="{{ $event->title }} - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
+                        {{ $event->title }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+
     </div>
+
+    {{-- SCROLLABLE BODY --}}
+    <div class="day-scroll-body">
 
     {{-- Time slots --}}
     @foreach($timeSlots as $slotIndex => $time)
@@ -16,7 +51,7 @@
                 @if($slotIndex === 0)
                     {{-- Calculate overlaps for all events --}}
                     @php
-                        $eventsArray = $dayEvents->all();
+                        $eventsArray = $dayEvents->where('all_day', false)->values()->all();
                         $eventPositions = [];
                         
                         foreach ($eventsArray as $index => $event) {
@@ -51,7 +86,7 @@
                     @endphp
                     
                     {{-- Render all events --}}
-                    @foreach($dayEvents as $eventIndex => $event)
+                    @foreach($dayEvents->where('all_day', false)->values() as $eventIndex => $event)
                         @php
                             // Calculate setup time (if exists)
                             $hasSetup = $event->setup_datetime && $event->setup_datetime < $event->start_datetime;
@@ -120,14 +155,24 @@
                                     $gradientStops[] = "{$lightColor} 100%";
                                 }
                                 
-                                $backgroundStyle = 'background: linear-gradient(to bottom, ' . implode(', ', $gradientStops) . ');';
+                                // Add stripes for request status
+                                if (strtolower($event->status) === 'request') {
+                                    $backgroundStyle = 'background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.3) 10px, rgba(255,255,255,0.3) 20px), linear-gradient(to bottom, ' . implode(', ', $gradientStops) . ');';
+                                } else {
+                                    $backgroundStyle = 'background: linear-gradient(to bottom, ' . implode(', ', $gradientStops) . ');';
+                                }
                             } else {
-                                $backgroundStyle = "background-color: {$venueColor};";
+                                if (strtolower($event->status) === 'request') {
+                                    $backgroundStyle = "background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.3) 10px, rgba(255,255,255,0.3) 20px), {$venueColor};";
+                                } else {
+                                    $backgroundStyle = "background-color: {$venueColor};";
+                                }
                             }
                         @endphp
                         
-                        <a href="{{ route('cnxevents.events.show', $event->id) }}" 
-                           class="day-event event-venue-color {{ $statusClass }}"
+                        <a href="#" 
+                           class="day-event event-venue-color {{ $statusClass }} view-event-btn"
+                           data-event-id="{{ $event->id }}"
                            style="{{ $backgroundStyle }} top: {{ $topPosition }}px; height: {{ $totalHeight }}px; left: {{ $leftPercent }}%; width: {{ $widthPercent }}%; right: auto;"
                            title="{{ $event->title }} ({{ $event->start_datetime->format('g:i A') }} - {{ $event->end_datetime->format('g:i A') }}) - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
                             <div style="padding-top: {{ $setupMinutes }}px; height: 100%; box-sizing: border-box;">
@@ -147,4 +192,7 @@
             </div>
         </div>
     @endforeach
+
+    </div>
+
 </div>

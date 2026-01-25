@@ -99,16 +99,59 @@
 
 /* Week and Day Views */
 .week-view, .day-view {
-    display: table;
-    width: 100%;
-    border-collapse: collapse;
+    position: relative;
     border: 1px solid #ddd;
     background: white;
-    position: relative;
+    overflow: hidden;
 }
+
+/* Sticky container for header and all-day row */
+.week-sticky, .day-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 300;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    overflow-y: scroll; /* Force scrollbar space */
+    margin-right: -17px; /* Hide the scrollbar */
+    padding-right: 17px; /* Restore the space */
+}
+
+/* Scrollable body */
+.week-scroll-body, .day-scroll-body {
+    max-height: 75vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Make rows use table display */
 .week-row, .day-row {
-    display: table-row;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
 }
+
+/* Fix the first column width explicitly */
+.week-row .time-slot-label,
+.day-row .time-slot-label {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+/* Header rows */
+.week-header, .day-header-row {
+    background: #3c8dbc;
+    color: #fff;
+}
+
+/* All-day rows */
+.week-allday, .day-allday {
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
 .time-slot-label {
     display: table-cell;
     background: #f5f5f5;
@@ -121,7 +164,7 @@
     vertical-align: top;
     font-weight: 600;
 }
-.time-slot-cell {
+.time-slot-cell, .week-allday-cell, .day-allday-cell {
     display: table-cell;
     background: white;
     height: 60px;
@@ -130,7 +173,13 @@
     position: relative;
     vertical-align: top;
 }
-.time-slot-cell.today { background: #e3f2fd; }
+.week-allday-cell, .day-allday-cell {
+    height: auto;
+    min-height: 30px;
+    background: #f9f9f9;
+    padding: 2px;
+}
+.time-slot-cell.today, .week-allday-cell.today, .day-allday-cell.today { background: #e3f2fd; }
 .week-day-header, .day-header {
     display: table-cell;
     background: #3c8dbc;
@@ -140,6 +189,36 @@
     font-weight: 600;
     border: 1px solid #2e6da4;
 }
+
+/* All-day events styling */
+.week-allday-event, .day-allday-event {
+    display: block;
+    margin-bottom: 2px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: white;
+    text-decoration: none;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.day-allday-event {
+    display: inline-block;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    font-size: 13px;
+}
+
+.week-allday-event:hover, .day-allday-event:hover {
+    filter: brightness(0.9);
+    text-decoration: none;
+    color: white;
+}
+
 .week-day-column, .day-column {
     position: relative;
 }
@@ -225,9 +304,9 @@
                 </a>
             </div>
             <a href="{{ route('cnxevents.calendar', ['view' => $view]) }}" class="btn btn-info">Today</a>
-            <a href="{{ route('cnxevents.events.create') }}" class="btn btn-success">
+            <button class="btn btn-success" data-toggle="modal" data-target="#eventModal">
                 <i class="glyphicon glyphicon-plus"></i> New Event
-            </a>
+            </button>
         </div>
     </div>
 
@@ -241,16 +320,16 @@
             
             <div style="display: flex; align-items: center; gap: 8px;">
                 <label for="status-filter" style="margin: 0; font-weight: 600;">Status:</label>
-                <select name="status" id="status-filter" class="form-control calendar-filter-select" style="width: 150px;">
+                <select name="status" id="status-filter" class="form-control" style="width: 150px;">
                     <option value="">All Statuses</option>
-                    <option value="Confirmed" {{ $filterStatus === 'Confirmed' ? 'selected' : '' }}>Confirmed</option>
+                    <option value="confirmed" {{ $filterStatus === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                     <option value="request" {{ $filterStatus === 'request' ? 'selected' : '' }}>Request</option>
                 </select>
             </div>
 
             <div style="display: flex; align-items: center; gap: 8px;">
                 <label for="venue-filter" style="margin: 0; font-weight: 600;">Venue:</label>
-                <select name="venue" id="venue-filter" class="form-control calendar-filter-select" style="width: 200px;">
+                <select name="venue" id="venue-filter" class="form-control" style="width: 200px;">
                     <option value="">All Venues</option>
                     @foreach($venues as $venue)
                         <option value="{{ $venue->id }}" {{ $filterVenue == $venue->id ? 'selected' : '' }}>
@@ -259,13 +338,15 @@
                     @endforeach
                 </select>
             </div>
-
-            @if($filterStatus || $filterVenue)
-                <a href="{{ route('cnxevents.calendar', ['view' => $view, 'year' => $currentDate->year, 'month' => $currentDate->month, 'day' => $currentDate->day]) }}" 
-                   class="btn btn-default btn-sm">
+            
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="glyphicon glyphicon-filter"></i> Apply Filters
+                </button>
+                <a href="{{ route('cnxevents.calendar', ['view' => $view, 'year' => $currentDate->year, 'month' => $currentDate->month, 'day' => $currentDate->day]) }}" class="btn btn-default">
                     <i class="glyphicon glyphicon-remove"></i> Clear Filters
                 </a>
-            @endif
+            </div>
         </form>
     </div>
 
@@ -288,18 +369,10 @@
     </div>
 </div>
 
-<script{!! \Helper::cspNonceAttr() !!}>
-(function() {
-    var filterForm = document.getElementById('calendar-filter-form');
-    var filterSelects = document.querySelectorAll('.calendar-filter-select');
-    
-    if (filterForm && filterSelects.length > 0) {
-        filterSelects.forEach(function(select) {
-            select.addEventListener('change', function() {
-                filterForm.submit();
-            });
-        });
-    }
-})();
-</script>
+@include('cnxevents::modals.event-modal')
+
+@endsection
+
+@section('scripts')
+<script{!! \Helper::cspNonceAttr() !!} src="{{ \Module::asset('cnxevents:js/events.js') }}"></script>
 @endsection

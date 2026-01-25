@@ -1,17 +1,36 @@
 // Events page JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Events.js loaded');
+    
     // Add Event button
     const addEventBtn = document.querySelector('button[data-target="#eventModal"]');
+    console.log('Add event button:', addEventBtn);
     if (addEventBtn) {
         addEventBtn.addEventListener('click', function() {
             resetForm();
         });
     }
 
-    // Edit Event buttons
-    document.querySelectorAll('.edit-event-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+    // Edit Event buttons (from event list)
+    const editButtons = document.querySelectorAll('.edit-event-btn');
+    console.log('Found edit buttons:', editButtons.length);
+    editButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             const eventId = this.getAttribute('data-event-id');
+            console.log('Edit button clicked, event ID:', eventId);
+            editEvent(eventId);
+        });
+    });
+
+    // View Event buttons (from calendar)
+    const viewButtons = document.querySelectorAll('.view-event-btn');
+    console.log('Found view buttons:', viewButtons.length);
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const eventId = this.getAttribute('data-event-id');
+            console.log('View button clicked, event ID:', eventId);
             editEvent(eventId);
         });
     });
@@ -33,6 +52,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Form submit handler
+    const eventForm = document.getElementById('eventForm');
+    if (eventForm) {
+        eventForm.addEventListener('submit', function(e) {
+            const allDayCheckbox = document.getElementById('all_day');
+            if (allDayCheckbox && allDayCheckbox.checked) {
+                // Copy date values to datetime fields for submission
+                const startDate = document.querySelector('input[name="start_date"]');
+                const endDate = document.querySelector('input[name="end_date"]');
+                const startDatetime = document.querySelector('input[name="start_datetime"]');
+                const endDatetime = document.querySelector('input[name="end_datetime"]');
+                
+                if (startDate && startDate.value && startDatetime) {
+                    startDatetime.value = startDate.value;
+                    startDatetime.removeAttribute('required');
+                }
+                if (endDate && endDate.value && endDatetime) {
+                    endDatetime.value = endDate.value;
+                    endDatetime.removeAttribute('required');
+                }
+                
+                // Remove validation from hidden fields
+                document.querySelectorAll('.datetime-field').forEach(field => {
+                    field.removeAttribute('required');
+                });
+            }
+        });
+    }
 });
 
 function resetForm() {
@@ -63,6 +111,7 @@ function resetForm() {
 }
 
 function editEvent(id) {
+    console.log('editEvent called with ID:', id);
     fetch(`/cnxevents/events/${id}`, {
         headers: {
             'Accept': 'application/json',
@@ -70,12 +119,14 @@ function editEvent(id) {
         }
     })
     .then(response => {
+        console.log('Response status:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
+        console.log('Event data received:', data);
         const form = document.getElementById('eventForm');
 
         // Update form action
@@ -97,11 +148,12 @@ function editEvent(id) {
         // Populate form fields
         Object.keys(data).forEach(key => {
             const element = form.querySelector(`[name="${key}"]`);
+            console.log(`Field ${key}:`, element, 'Value:', data[key]);
             if (element) {
                 if (element.type === 'checkbox') {
                     element.checked = data[key];
                 } else {
-                    element.value = data[key];
+                    element.value = data[key] || '';
                 }
             }
         });
@@ -142,13 +194,52 @@ function editEvent(id) {
 
 function toggleDatetimeFields() {
     const allDayCheckbox = document.getElementById('all_day');
-    const datetimeFields = document.getElementById('datetimeFields');
+    const datetimeFields = document.querySelectorAll('.datetime-field');
+    const dateFields = document.querySelectorAll('.date-field');
+    const setupReleaseFields = document.querySelector('.setup-release-fields');
 
-    if (allDayCheckbox && datetimeFields) {
-        if (allDayCheckbox.checked) {
-            datetimeFields.style.display = 'none';
-        } else {
-            datetimeFields.style.display = 'block';
+    if (allDayCheckbox && allDayCheckbox.checked) {
+        // Show date inputs, hide datetime inputs
+        datetimeFields.forEach(field => {
+            field.style.display = 'none';
+            field.removeAttribute('required');
+            field.disabled = false; // Keep enabled for form submission
+        });
+        dateFields.forEach(field => {
+            field.style.display = 'block';
+            field.setAttribute('required', 'required');
+            field.disabled = false;
+            // Copy value from datetime field if exists
+            const datetimeField = field.previousElementSibling;
+            if (datetimeField && datetimeField.value) {
+                field.value = datetimeField.value.split('T')[0];
+            }
+        });
+        // Hide setup/release fields for all-day events
+        if (setupReleaseFields) {
+            setupReleaseFields.style.display = 'none';
+        }
+    } else {
+        // Show datetime inputs, hide date inputs
+        datetimeFields.forEach(field => {
+            field.style.display = 'block';
+            field.setAttribute('required', 'required');
+            field.disabled = false;
+        });
+        dateFields.forEach(field => {
+            field.style.display = 'none';
+            field.removeAttribute('required');
+            field.disabled = true; // Disable so it doesn't submit
+            // Copy value to datetime field if exists
+            const datetimeField = field.previousElementSibling;
+            if (field.value && datetimeField) {
+                const currentTime = datetimeField.value ? datetimeField.value.split('T')[1] : '';
+                datetimeField.value = field.value + (currentTime ? 'T' + currentTime : '');
+            }
+        });
+        // Show setup/release fields
+        if (setupReleaseFields) {
+            setupReleaseFields.style.display = 'flex';
         }
     }
 }

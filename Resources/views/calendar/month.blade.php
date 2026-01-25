@@ -12,8 +12,9 @@
                     $venueColor = $event->venue ? $event->venue->color : '#3c8dbc';
                     $statusClass = strtolower($event->status) === 'request' ? 'event-request' : '';
                 @endphp
-                <a href="{{ route('cnxevents.events.show', $event->id) }}" 
-                   class="calendar-event event-venue-color {{ $statusClass }}"
+                <a href="#" 
+                   class="calendar-event event-venue-color {{ $statusClass }} view-event-btn"
+                   data-event-id="{{ $event->id }}"
                    style="background-color: {{ $venueColor }};"
                    title="{{ $event->title }} - {{ $event->start_datetime->format('g:i A') }} - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
                     {{ $event->start_datetime->format('g:i A') }} - {{ $event->title }}

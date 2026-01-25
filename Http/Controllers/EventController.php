@@ -65,11 +65,16 @@ class EventController extends Controller
      */
     public function store(Request $request)
     {
+        // Convert checkbox value to boolean
+        $request->merge(['all_day' => $request->has('all_day')]);
+        
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'start_datetime' => 'required|date',
-            'end_datetime' => 'required|date|after:start_datetime',
+            'start_datetime' => 'required_without:start_date|nullable|date',
+            'start_date' => 'required_without:start_datetime|nullable|date',
+            'end_datetime' => 'required_without:end_date|nullable|date',
+            'end_date' => 'required_without:end_datetime|nullable|date',
             'setup_datetime' => 'nullable|date',
             'venue_release_datetime' => 'nullable|date',
             'all_day' => 'boolean',
@@ -85,33 +90,58 @@ class EventController extends Controller
             return 'custom_field_' . $field->id;
         }, CustomField::all()->all()));
         
-        // Convert datetime-local format (YYYY-MM-DDTHH:MM) to MySQL format (YYYY-MM-DD HH:MM:SS)
-        if ($request->filled('start_datetime')) {
-            $data['start_datetime'] = str_replace('T', ' ', $request->start_datetime) . ':00';
-        }
-        if ($request->filled('end_datetime')) {
-            $data['end_datetime'] = str_replace('T', ' ', $request->end_datetime) . ':00';
-        }
-        if ($request->filled('setup_datetime')) {
-            $data['setup_datetime'] = str_replace('T', ' ', $request->setup_datetime) . ':00';
-        }
-        if ($request->filled('venue_release_datetime')) {
-            $data['venue_release_datetime'] = str_replace('T', ' ', $request->venue_release_datetime) . ':00';
+        // Handle all day events
+        if ($request->filled('all_day') && $request->all_day) {
+            // For all day events, use date inputs and set specific times
+            $data['start_datetime'] = ($request->start_date ?: $request->start_datetime) . ' 00:01:00';
+            $data['end_datetime'] = ($request->end_date ?: $request->end_datetime) . ' 23:59:00';
+            $data['setup_datetime'] = null;
+            $data['venue_release_datetime'] = null;
+        } else {
+            // Convert datetime-local format (YYYY-MM-DDTHH:MM) to MySQL format (YYYY-MM-DD HH:MM:SS)
+            if ($request->filled('start_datetime')) {
+                         \Log::error('4');
+
+                $data['start_datetime'] = str_replace('T', ' ', $request->start_datetime) . ':00';
+            }
+            if ($request->filled('end_datetime')) {
+                         \Log::error('5');
+
+                $data['end_datetime'] = str_replace('T', ' ', $request->end_datetime) . ':00';
+            }
+            if ($request->filled('setup_datetime')) {
+                         \Log::error('6');
+
+                $data['setup_datetime'] = str_replace('T', ' ', $request->setup_datetime) . ':00';
+            }
+            if ($request->filled('venue_release_datetime')) {
+                            \Log::error('7');
+                $data['venue_release_datetime'] = str_replace('T', ' ', $request->venue_release_datetime) . ':00';
+            }
         }
         
+        \Log::error('8');
+
         $data['user_id'] = auth()->id();
         $data['status'] = 'request';
 
         $event = Event::create($data);
         
+        \Log::error('9');
+
         // Handle custom fields - save to relational table
         $customFields = CustomField::all();
         foreach ($customFields as $field) {
+                     \Log::error('10');
+
             $key = 'custom_field_' . $field->id;
             if ($request->has($key)) {
+             \Log::error('11');
+
                 $value = $request->input($key);
                 // Handle multiselect arrays
                 if (is_array($value)) {
+                    \Log::error('12');
                     $value = implode(', ', $value);
                 }
                 EventCustomFieldValue::create([
@@ -119,7 +149,9 @@ class EventController extends Controller
                     'custom_field_id' => $field->id,
                     'value' => $value
                 ]);
+                \Log::error('13');
             } elseif ($field->is_required) {
+                \Log::error('14');
                 $event->delete();
                 return back()->withErrors([$key => 'This field is required.']);
             }
@@ -138,21 +170,32 @@ class EventController extends Controller
         $event = Event::with('venue', 'user', 'customFieldValues.customField')->findOrFail($id);
 
         // Return JSON for AJAX requests (used by edit modal and calendar)
-        if (request()->ajax()) {
-            $eventData = $event->toArray();
+        if (request()->ajax() || request()->wantsJson()) {
+            $eventData = [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->description,
+                'venue_id' => $event->venue_id,
+                'status' => $event->status,
+                'all_day' => $event->all_day,
+                'client_name' => $event->client_name,
+                'client_email' => $event->client_email,
+                'client_phone' => $event->client_phone,
+                'client_company' => $event->client_company,
+            ];
             
-            // Convert datetime format from MySQL to datetime-local format (YYYY-MM-DDTHH:MM)
-            if (isset($eventData['start_datetime'])) {
-                $eventData['start_datetime'] = date('Y-m-d\TH:i', strtotime($eventData['start_datetime']));
+            // Convert datetime format from Carbon to datetime-local format (YYYY-MM-DDTHH:MM)
+            if ($event->start_datetime) {
+                $eventData['start_datetime'] = $event->start_datetime->format('Y-m-d\TH:i');
             }
-            if (isset($eventData['end_datetime'])) {
-                $eventData['end_datetime'] = date('Y-m-d\TH:i', strtotime($eventData['end_datetime']));
+            if ($event->end_datetime) {
+                $eventData['end_datetime'] = $event->end_datetime->format('Y-m-d\TH:i');
             }
-            if (isset($eventData['setup_datetime'])) {
-                $eventData['setup_datetime'] = date('Y-m-d\TH:i', strtotime($eventData['setup_datetime']));
+            if ($event->setup_datetime) {
+                $eventData['setup_datetime'] = $event->setup_datetime->format('Y-m-d\TH:i');
             }
-            if (isset($eventData['venue_release_datetime'])) {
-                $eventData['venue_release_datetime'] = date('Y-m-d\TH:i', strtotime($eventData['venue_release_datetime']));
+            if ($event->venue_release_datetime) {
+                $eventData['venue_release_datetime'] = $event->venue_release_datetime->format('Y-m-d\TH:i');
             }
             
             // Load custom fields from relational table
@@ -197,11 +240,16 @@ class EventController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Convert checkbox value to boolean
+        $request->merge(['all_day' => $request->has('all_day')]);
+        
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'start_datetime' => 'required|date',
-            'end_datetime' => 'required|date|after:start_datetime',
+            'start_datetime' => 'required_without:start_date|nullable|date',
+            'start_date' => 'required_without:start_datetime|nullable|date',
+            'end_datetime' => 'required_without:end_date|nullable|date',
+            'end_date' => 'required_without:end_datetime|nullable|date',
             'setup_datetime' => 'nullable|date',
             'venue_release_datetime' => 'nullable|date',
             'all_day' => 'boolean',
@@ -219,30 +267,39 @@ class EventController extends Controller
             return 'custom_field_' . $field->id;
         }, CustomField::all()->all()));
         
-        // Convert datetime-local format (YYYY-MM-DDTHH:MM) to MySQL format (YYYY-MM-DD HH:MM:SS)
-        if ($request->filled('start_datetime')) {
-            $data['start_datetime'] = str_replace('T', ' ', $request->start_datetime) . ':00';
-        }
-        if ($request->filled('end_datetime')) {
-            $data['end_datetime'] = str_replace('T', ' ', $request->end_datetime) . ':00';
-        }
-        if ($request->filled('setup_datetime')) {
-            $data['setup_datetime'] = str_replace('T', ' ', $request->setup_datetime) . ':00';
-        }
-        if ($request->filled('venue_release_datetime')) {
-            $data['venue_release_datetime'] = str_replace('T', ' ', $request->venue_release_datetime) . ':00';
+        // Handle all day events
+        if ($request->filled('all_day') && $request->all_day) {
+            // For all day events, use date inputs and set specific times
+            $data['start_datetime'] = ($request->start_date ?: $request->start_datetime) . ' 00:01:00';
+            $data['end_datetime'] = ($request->end_date ?: $request->end_datetime) . ' 23:59:00';
+            $data['setup_datetime'] = null;
+            $data['venue_release_datetime'] = null;
+        } else {
+            // Convert datetime-local format (YYYY-MM-DDTHH:MM) to MySQL format (YYYY-MM-DD HH:MM:SS)
+            if ($request->filled('start_datetime')) {
+                $data['start_datetime'] = str_replace('T', ' ', $request->start_datetime) . ':00';
+            }
+            if ($request->filled('end_datetime')) {
+                $data['end_datetime'] = str_replace('T', ' ', $request->end_datetime) . ':00';
+            }
+            if ($request->filled('setup_datetime')) {
+                $data['setup_datetime'] = str_replace('T', ' ', $request->setup_datetime) . ':00';
+            }
+            if ($request->filled('venue_release_datetime')) {
+                $data['venue_release_datetime'] = str_replace('T', ' ', $request->venue_release_datetime) . ':00';
+            }
         }
 
         $event->update($data);
-        
-        // Handle custom fields - update in relational table
+
+        // Handle custom fields - update relational table
         $customFields = CustomField::all();
         foreach ($customFields as $field) {
             $key = 'custom_field_' . $field->id;
             if ($request->has($key)) {
                 $value = $request->input($key);
                 // Handle multiselect arrays
-                if (is_array($value)) {
+                if (is_array($value)) { 
                     $value = implode(', ', $value);
                 }
                 EventCustomFieldValue::updateOrCreate(

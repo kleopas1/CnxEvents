@@ -50,6 +50,9 @@ class CalendarController extends Controller
         // Get venues for filter dropdown
         $venues = \Modules\CnxEvents\Entities\Venue::orderBy('name')->get();
         
+        // Get custom fields for event modal
+        $customFields = \Modules\CnxEvents\Entities\CustomField::all();
+        
         return view('cnxevents::calendar', array_merge([
             'view' => $view,
             'currentDate' => $currentDate,
@@ -58,6 +61,7 @@ class CalendarController extends Controller
             'filterStatus' => $filterStatus,
             'filterVenue' => $filterVenue,
             'venues' => $venues,
+            'customFields' => $customFields,
         ], $data));
     }
 
