@@ -16,7 +16,6 @@
                 <td>{{ $venue->name }}</td>
                 <td>
                     <span style="display: inline-block; width: 30px; height: 20px; background-color: {{ $venue->color }}; border: 1px solid #ccc; border-radius: 3px;"></span>
-                    {{ $venue->color }}
                 </td>
                 <td>{{ $venue->capacity }}</td>
                 <td>

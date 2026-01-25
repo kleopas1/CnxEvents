@@ -152,12 +152,8 @@ class DepartmentController extends Controller
     private function redirectWithTab(Request $request, $message, $isError = false)
     {
         $sessionKey = $isError ? 'error' : 'success';
-        $redirect = redirect()->route('cnxevents.settings.index')->with($sessionKey, $message);
-        
-        if ($request->has('active_tab')) {
-            $redirect = $redirect->with('active_tab', $request->active_tab);
-        }
-        
-        return $redirect;
+        return redirect()->route('cnxevents.settings.index')
+            ->with($sessionKey, $message)
+            ->with('active_tab', 'departments');
     }
 }

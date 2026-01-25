@@ -96,6 +96,12 @@ function resetForm() {
         methodInput.remove();
     }
 
+    // Set redirect URL to current page
+    const redirectInput = document.getElementById('redirectToInput');
+    if (redirectInput) {
+        redirectInput.value = window.location.href;
+    }
+
     // Reset modal title
     document.getElementById('modalTitle').textContent = 'Add Event';
 
@@ -141,6 +147,12 @@ function editEvent(id) {
             form.appendChild(methodInput);
         }
         methodInput.value = 'PUT';
+
+        // Set redirect URL to current page
+        const redirectInput = document.getElementById('redirectToInput');
+        if (redirectInput) {
+            redirectInput.value = window.location.href;
+        }
 
         // Update modal title
         document.getElementById('modalTitle').textContent = 'Edit Event';

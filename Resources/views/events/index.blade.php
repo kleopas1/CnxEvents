@@ -2,6 +2,17 @@
 
 @section('title', 'Events')
 
+@section('stylesheets')
+<style>
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+.table tbody tr:hover {
+    background-color: #f0f8ff !important;
+}
+</style>
+@endsection
+
 @section('content')
 <div class="container">
     <h1>Events</h1>
@@ -25,7 +36,7 @@
         </div>
     @endif
     
-    <button class="btn btn-primary" data-toggle="modal" data-target="#eventModal" data-backdrop="false">Add Event</button>
+    <button class="btn btn-primary" data-toggle="modal" data-target="#eventModal" data-backdrop="false" style="margin-bottom: 20px;">Add Event</button>
 
     <!-- Filters -->
     <form method="GET" class="mb-3">
@@ -75,10 +86,18 @@
                 <tr>
                     <td>{{ $event->title }}</td>
                     <td>{{ $event->client_name }}</td>
-                    <td>{{ $event->venue->name }}</td>
-                    <td>{{ $event->start_datetime->format('Y-m-d H:i') }}</td>
-                    <td>{{ $event->end_datetime->format('Y-m-d H:i') }}</td>
-                    <td>{{ ucfirst($event->status) }}</td>
+                    <td>
+                        <span class="label" style="background-color: {{ $event->venue->color ?? '#3c8dbc' }}; color: white;">
+                            {{ $event->venue->name }}
+                        </span>
+                    </td>
+                    <td>{{ $event->start_datetime->format('d-m-Y H:i') }}</td>
+                    <td>{{ $event->end_datetime->format('d-m-Y H:i') }}</td>
+                    <td>
+                        <span class="label label-{{ $event->status === 'confirmed' ? 'success' : 'warning' }}">
+                            {{ ucfirst($event->status) }}
+                        </span>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-info edit-event-btn" data-event-id="{{ $event->id }}">Edit</button>
                         <form method="POST" action="{{ route('cnxevents.events.destroy', $event->id) }}" style="display:inline;">

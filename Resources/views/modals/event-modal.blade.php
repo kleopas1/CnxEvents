@@ -131,6 +131,7 @@
         <div class="modal-content">
             <form id="eventForm" method="POST">
                 <input type="hidden" name="_token" value="{{ csrf_token() }}" />
+                <input type="hidden" name="redirect_to" id="redirectToInput" value="{{ url()->current() }}" />
                 <div class="modal-header">
                     <h4 class="modal-title" id="modalTitle">
                         <i class="glyphicon glyphicon-calendar"></i> Add Event

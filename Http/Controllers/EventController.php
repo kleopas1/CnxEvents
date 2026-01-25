@@ -39,6 +39,9 @@ class EventController extends Controller
             $query->where('end_datetime', '<=', $request->end_date);
         }
 
+        // Sort by start date/time ascending (earliest first)
+        $query->orderBy('start_datetime', 'asc');
+
         $events = $query->paginate(10);
         $venues = Venue::all();
         $users = \App\User::all();
@@ -100,48 +103,33 @@ class EventController extends Controller
         } else {
             // Convert datetime-local format (YYYY-MM-DDTHH:MM) to MySQL format (YYYY-MM-DD HH:MM:SS)
             if ($request->filled('start_datetime')) {
-                         \Log::error('4');
-
                 $data['start_datetime'] = str_replace('T', ' ', $request->start_datetime) . ':00';
             }
             if ($request->filled('end_datetime')) {
-                         \Log::error('5');
-
                 $data['end_datetime'] = str_replace('T', ' ', $request->end_datetime) . ':00';
             }
             if ($request->filled('setup_datetime')) {
-                         \Log::error('6');
-
                 $data['setup_datetime'] = str_replace('T', ' ', $request->setup_datetime) . ':00';
             }
             if ($request->filled('venue_release_datetime')) {
-                            \Log::error('7');
                 $data['venue_release_datetime'] = str_replace('T', ' ', $request->venue_release_datetime) . ':00';
             }
         }
         
-        \Log::error('8');
-
         $data['user_id'] = auth()->id();
         $data['status'] = 'request';
 
         $event = Event::create($data);
         
-        \Log::error('9');
-
         // Handle custom fields - save to relational table
         $customFields = CustomField::all();
         foreach ($customFields as $field) {
-                     \Log::error('10');
-
             $key = 'custom_field_' . $field->id;
             if ($request->has($key)) {
-             \Log::error('11');
 
                 $value = $request->input($key);
                 // Handle multiselect arrays
                 if (is_array($value)) {
-                    \Log::error('12');
                     $value = implode(', ', $value);
                 }
                 EventCustomFieldValue::create([
@@ -149,15 +137,15 @@ class EventController extends Controller
                     'custom_field_id' => $field->id,
                     'value' => $value
                 ]);
-                \Log::error('13');
             } elseif ($field->is_required) {
-                \Log::error('14');
                 $event->delete();
                 return back()->withErrors([$key => 'This field is required.']);
             }
         }
 
-        return redirect()->route('cnxevents.events.index')->with('success', 'Event created successfully.');
+        // Redirect to the originating view if specified
+        $redirectTo = $request->input('redirect_to', route('cnxevents.events.index'));
+        return redirect($redirectTo)->with('success', 'Event created successfully.');
     }
 
     /**
@@ -320,7 +308,9 @@ class EventController extends Controller
             }
         }
 
-        return redirect()->route('cnxevents.events.index')->with('success', 'Event updated successfully.');
+        // Redirect to the originating view if specified
+        $redirectTo = $request->input('redirect_to', route('cnxevents.events.index'));
+        return redirect($redirectTo)->with('success', 'Event updated successfully.');
     }
 
     /**

@@ -74,10 +74,12 @@ class CustomFieldController extends Controller
             $customField->departments()->attach($request->departments);
             
             if ($request->ajax()) {
+                session()->flash('success', 'Custom field created successfully.');
+                session()->flash('active_tab', 'custom-fields');
                 return response()->json([
                     'success' => true,
                     'message' => 'Custom field created successfully.',
-                    'redirect' => route('cnxevents.settings.index', ['active_tab' => 'custom-fields'])
+                    'redirect' => route('cnxevents.settings.index')
                 ]);
             }
             
@@ -160,10 +162,12 @@ class CustomFieldController extends Controller
             $customField->departments()->sync($request->departments);
 
             if ($request->ajax()) {
+                session()->flash('success', 'Custom field updated successfully.');
+                session()->flash('active_tab', 'custom-fields');
                 return response()->json([
                     'success' => true,
                     'message' => 'Custom field updated successfully.',
-                    'redirect' => route('cnxevents.settings.index', ['active_tab' => 'custom-fields'])
+                    'redirect' => route('cnxevents.settings.index')
                 ]);
             }
 
@@ -217,12 +221,8 @@ class CustomFieldController extends Controller
     private function redirectWithTab(Request $request, $message, $isError = false)
     {
         $sessionKey = $isError ? 'error' : 'success';
-        $redirect = redirect()->route('cnxevents.settings.index')->with($sessionKey, $message);
-        
-        if ($request->has('active_tab')) {
-            $redirect = $redirect->with('active_tab', $request->active_tab);
-        }
-        
-        return $redirect;
+        return redirect()->route('cnxevents.settings.index')
+            ->with($sessionKey, $message)
+            ->with('active_tab', 'custom-fields');
     }
 }
