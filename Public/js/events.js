@@ -1,6 +1,14 @@
 // Events page JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOMContentLoaded - Events.js loaded');
+    // Check if we need to reopen the modal after validation error
+    const container = document.querySelector('[data-reopen-modal="true"]');
+    if (container) {
+        setTimeout(function() {
+            if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                jQuery('#eventModal').modal('show');
+            }
+        }, 300);
+    }
     
     // Add Event button
     const addEventBtn = document.querySelector('button[data-target="#eventModal"]');
@@ -258,9 +266,39 @@ function toggleDatetimeFields() {
 
 // Initialize datetime fields toggle on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Events.js: DOM Content Loaded');
+    
     const allDayCheckbox = document.getElementById('all_day');
     if (allDayCheckbox) {
         allDayCheckbox.addEventListener('change', toggleDatetimeFields);
         toggleDatetimeFields(); // Initial state
+    }
+
+    // Check if we need to reopen the modal after validation error
+    // This is set by the controller when redirecting back with errors
+    const container = document.querySelector('[data-show-event-modal]');
+    console.log('Events.js: Looking for modal flag container:', container);
+    
+    if (container) {
+        console.log('Events.js: Container found, dataset:', container.dataset);
+        console.log('Events.js: showEventModal value:', container.dataset.showEventModal);
+        
+        if (container.dataset.showEventModal === 'true') {
+            console.log('Events.js: Opening modal due to validation errors');
+            
+            // Use setTimeout to ensure modal is ready
+            setTimeout(function() {
+                if (typeof $ !== 'undefined' && $.fn.modal) {
+                    $('#eventModal').modal('show');
+                    console.log('Events.js: Modal show command executed');
+                    // Update datetime fields visibility based on all_day checkbox state
+                    toggleDatetimeFields();
+                } else {
+                    console.error('Events.js: jQuery or Bootstrap modal not available');
+                }
+            }, 100);
+        }
+    } else {
+        console.log('Events.js: No modal flag container found');
     }
 });

@@ -77,14 +77,14 @@
             var details = '';
             details += '<p><strong>Description:</strong> ' + (data.description || 'N/A') + '</p>';
             details += '<p><strong>Venue:</strong> ' + (data.venue ? data.venue.name : 'N/A') + '</p>';
-            details += '<p><strong>Start:</strong> ' + new Date(data.start_datetime).toLocaleString() + '</p>';
-            details += '<p><strong>End:</strong> ' + new Date(data.end_datetime).toLocaleString() + '</p>';
+            details += '<p><strong>Start:</strong> ' + new Date(data.start_datetime).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) + '</p>';
+            details += '<p><strong>End:</strong> ' + new Date(data.end_datetime).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) + '</p>';
             
             if (data.setup_datetime) {
-                details += '<p><strong>Setup:</strong> ' + new Date(data.setup_datetime).toLocaleString() + '</p>';
+                details += '<p><strong>Setup:</strong> ' + new Date(data.setup_datetime).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) + '</p>';
             }
             if (data.venue_release_datetime) {
-                details += '<p><strong>Release:</strong> ' + new Date(data.venue_release_datetime).toLocaleString() + '</p>';
+                details += '<p><strong>Release:</strong> ' + new Date(data.venue_release_datetime).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) + '</p>';
             }
             
             details += '<p><strong>Status:</strong> <span class="label label-' + (data.status === 'confirmed' ? 'success' : 'info') + '">' + data.status + '</span></p>';

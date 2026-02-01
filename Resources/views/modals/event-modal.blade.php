@@ -129,7 +129,7 @@
 <div class="modal fade event-modal" id="eventModal" tabindex="-1" role="dialog" data-backdrop="false" style="z-index: 100000;">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <form id="eventForm" method="POST">
+            <form id="eventForm" method="POST" action="{{ route('cnxevents.events.store') }}">
                 <input type="hidden" name="_token" value="{{ csrf_token() }}" />
                 <input type="hidden" name="redirect_to" id="redirectToInput" value="{{ url()->current() }}" />
                 <div class="modal-header">
@@ -141,6 +141,19 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <!-- Validation Errors -->
+                    @if($errors->any())
+                        <div class="alert alert-danger alert-dismissible">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            <strong><i class="glyphicon glyphicon-exclamation-sign"></i> Validation Error:</strong>
+                            <ul style="margin-top: 10px; margin-bottom: 0;">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    
                     <!-- Event Details Section -->
                     <div class="form-section">
                         <div class="section-header">
@@ -148,11 +161,11 @@
                         </div>
                         <div class="form-group">
                             <label>Title <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control" placeholder="Event name" required>
+                            <input type="text" name="title" class="form-control" placeholder="Event name" value="{{ old('title') }}" required>
                         </div>
                         <div class="form-group">
                             <label>Description</label>
-                            <textarea name="description" class="form-control" rows="3" placeholder="Event description"></textarea>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Event description">{{ old('description') }}</textarea>
                         </div>
                         <div class="row">
                             <div class="col-md-8">
@@ -161,7 +174,7 @@
                                     <select name="venue_id" class="form-control" required>
                                         <option value="">Select venue...</option>
                                         @foreach($venues ?? [] as $venue)
-                                            <option value="{{ $venue->id }}">{{ $venue->name }}{{ $venue->capacity ? ' (' . $venue->capacity . ' guests)' : '' }}</option>
+                                            <option value="{{ $venue->id }}" {{ old('venue_id') == $venue->id ? 'selected' : '' }}>{{ $venue->name }}{{ $venue->capacity ? ' (' . $venue->capacity . ' guests)' : '' }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -170,7 +183,7 @@
                                 <div class="form-group">
                                     <label>&nbsp;</label>
                                     <div class="form-check" style="margin-top: 10px;">
-                                        <input type="checkbox" name="all_day" class="form-check-input" id="all_day">
+                                        <input type="checkbox" name="all_day" class="form-check-input" id="all_day" {{ old('all_day') ? 'checked' : '' }}>
                                         <label class="form-check-label" for="all_day" style="font-weight: normal;">
                                             <i class="glyphicon glyphicon-time"></i> All Day Event
                                         </label>
@@ -189,15 +202,15 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Start Date/Time <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" name="start_datetime" class="form-control datetime-field">
-                                    <input type="date" name="start_date" class="form-control date-field" style="display: none;">
+                                    <input type="datetime-local" name="start_datetime" class="form-control datetime-field" value="{{ old('start_datetime') }}">
+                                    <input type="date" name="start_date" class="form-control date-field" value="{{ old('start_date') }}" style="display: none;">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>End Date/Time <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" name="end_datetime" class="form-control datetime-field">
-                                    <input type="date" name="end_date" class="form-control date-field" style="display: none;">
+                                    <input type="datetime-local" name="end_datetime" class="form-control datetime-field" value="{{ old('end_datetime') }}">
+                                    <input type="date" name="end_date" class="form-control date-field" value="{{ old('end_date') }}" style="display: none;">
                                 </div>
                             </div>
                         </div>
@@ -205,14 +218,14 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Setup Datetime</label>
-                                    <input type="datetime-local" name="setup_datetime" class="form-control">
+                                    <input type="datetime-local" name="setup_datetime" class="form-control" value="{{ old('setup_datetime') }}">
                                     <small class="form-text text-muted">Time to start setting up venue</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Venue Release Datetime</label>
-                                    <input type="datetime-local" name="venue_release_datetime" class="form-control">
+                                    <input type="datetime-local" name="venue_release_datetime" class="form-control" value="{{ old('venue_release_datetime') }}">
                                     <small class="form-text text-muted">Time when venue is released</small>
                                 </div>
                             </div>
@@ -228,13 +241,13 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Client Name</label>
-                                    <input type="text" name="client_name" class="form-control" placeholder="Contact person">
+                                    <input type="text" name="client_name" class="form-control" placeholder="Contact person" value="{{ old('client_name') }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Client Company</label>
-                                    <input type="text" name="client_company" class="form-control" placeholder="Company name">
+                                    <input type="text" name="client_company" class="form-control" placeholder="Company name" value="{{ old('client_company') }}">
                                 </div>
                             </div>
                         </div>
@@ -242,13 +255,13 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Client Email</label>
-                                    <input type="email" name="client_email" class="form-control" placeholder="email@example.com">
+                                    <input type="email" name="client_email" class="form-control" placeholder="email@example.com" value="{{ old('client_email') }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Client Phone</label>
-                                    <input type="text" name="client_phone" class="form-control" placeholder="+1 (555) 123-4567">
+                                    <input type="text" name="client_phone" class="form-control" placeholder="+1 (555) 123-4567" value="{{ old('client_phone') }}">
                                 </div>
                             </div>
                         </div>
@@ -265,27 +278,27 @@
                                 <div class="form-group">
                                     <label>{{ $field->name }} @if($field->is_required)<span class="text-danger">*</span>@endif</label>
                                     @if($field->type == 'text')
-                                        <input type="text" name="custom_field_{{ $field->id }}" class="form-control" @if($field->is_required) required @endif>
+                                        <input type="text" name="custom_field_{{ $field->id }}" class="form-control" value="{{ old('custom_field_' . $field->id) }}" @if($field->is_required) required @endif>
                                     @elseif($field->type == 'select')
                                         <select name="custom_field_{{ $field->id }}" class="form-control" @if($field->is_required) required @endif>
                                             <option value="">Select...</option>
                                             @foreach($field->options ?? [] as $option)
-                                                <option value="{{ $option }}">{{ $option }}</option>
+                                                <option value="{{ $option }}" {{ old('custom_field_' . $field->id) == $option ? 'selected' : '' }}>{{ $option }}</option>
                                             @endforeach
                                         </select>
                                     @elseif($field->type == 'multiselect')
                                         <select name="custom_field_{{ $field->id }}[]" class="form-control" multiple style="height: auto; min-height: 100px;" @if($field->is_required) required @endif>
                                             @foreach($field->options ?? [] as $option)
-                                                <option value="{{ $option }}">{{ $option }}</option>
+                                                <option value="{{ $option }}" {{ in_array($option, old('custom_field_' . $field->id, [])) ? 'selected' : '' }}>{{ $option }}</option>
                                             @endforeach
                                         </select>
                                         <small class="form-text text-muted">Hold Ctrl (Cmd on Mac) to select multiple</small>
                                     @elseif($field->type == 'date')
-                                        <input type="date" name="custom_field_{{ $field->id }}" class="form-control" @if($field->is_required) required @endif>
+                                        <input type="date" name="custom_field_{{ $field->id }}" class="form-control" value="{{ old('custom_field_' . $field->id) }}" @if($field->is_required) required @endif>
                                     @elseif($field->type == 'integer')
-                                        <input type="number" step="1" name="custom_field_{{ $field->id }}" class="form-control" @if($field->is_required) required @endif>
+                                        <input type="number" step="1" name="custom_field_{{ $field->id }}" class="form-control" value="{{ old('custom_field_' . $field->id) }}" @if($field->is_required) required @endif>
                                     @elseif($field->type == 'decimal')
-                                        <input type="number" step="0.01" name="custom_field_{{ $field->id }}" class="form-control" @if($field->is_required) required @endif>
+                                        <input type="number" step="0.01" name="custom_field_{{ $field->id }}" class="form-control" value="{{ old('custom_field_' . $field->id) }}" @if($field->is_required) required @endif>
                                     @endif
                                 </div>
                             @endforeach
@@ -306,4 +319,4 @@
     </div>
 </div>
 
-<script{!! \Helper::cspNonceAttr() !!} src="{{ \Module::asset('cnxevents:js/events.js') }}"></script>
+<script{!! \Helper::cspNonceAttr() !!} src="{{ \Module::asset('cnxevents:js/events.js') }}?v={{ time() }}"></script>

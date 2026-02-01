@@ -272,7 +272,7 @@
 @endsection
 
 @section('content')
-<div class="calendar-container">
+<div class="calendar-container" @if(old('title')) data-reopen-modal="true" @endif>
     <div class="calendar-header">
         <div class="calendar-nav">
             <a href="{{ route('cnxevents.calendar', array_merge(request()->all(), ['year' => $prevDate->year, 'month' => $prevDate->month, 'day' => $prevDate->day])) }}" class="btn btn-default">
@@ -359,12 +359,19 @@
     @endif
 
     <div class="legend">
-        <strong>Status Legend:</strong>
-        <span class="legend-item">
-            <span class="legend-color event-status-confirmed"></span> Confirmed
+        <strong>Venues:</strong>
+        @foreach($venues as $venue)
+            <span class="legend-item">
+                <span class="legend-color" style="background-color: {{ $venue->color }}; border: 1px solid #ddd;"></span> 
+                {{ $venue->name }}
+            </span>
+        @endforeach
+        <span class="legend-item" style="margin-left: 20px;">
+            <strong>Status:</strong>
         </span>
         <span class="legend-item">
-            <span class="legend-color event-status-request"></span> Request
+            <span class="legend-color" style="background: repeating-linear-gradient(45deg, #999, #999 3px, transparent 3px, transparent 6px);"></span> 
+            Request
         </span>
     </div>
 </div>
@@ -374,5 +381,5 @@
 @endsection
 
 @section('scripts')
-<script{!! \Helper::cspNonceAttr() !!} src="{{ \Module::asset('cnxevents:js/events.js') }}"></script>
+<script{!! \Helper::cspNonceAttr() !!} src="{{ \Module::asset('cnxevents:js/events.js') }}?v={{ time() }}"></script>
 @endsection

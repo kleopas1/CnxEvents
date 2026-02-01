@@ -71,7 +71,7 @@ class EventController extends Controller
         // Convert checkbox value to boolean
         $request->merge(['all_day' => $request->has('all_day')]);
         
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_datetime' => 'required_without:start_date|nullable|date',
@@ -87,6 +87,12 @@ class EventController extends Controller
             'client_phone' => 'nullable|string|max:255',
             'client_company' => 'nullable|string|max:255',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         // Prepare event data (exclude custom fields)
         $data = $request->except(array_map(function($field) {
@@ -139,7 +145,9 @@ class EventController extends Controller
                 ]);
             } elseif ($field->is_required) {
                 $event->delete();
-                return back()->withErrors([$key => 'This field is required.']);
+                return back()
+                    ->withErrors([$key => $field->name . ' is required.'])
+                    ->withInput();
             }
         }
 
@@ -231,7 +239,7 @@ class EventController extends Controller
         // Convert checkbox value to boolean
         $request->merge(['all_day' => $request->has('all_day')]);
         
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_datetime' => 'required_without:start_date|nullable|date',
@@ -247,6 +255,13 @@ class EventController extends Controller
             'client_phone' => 'nullable|string|max:255',
             'client_company' => 'nullable|string|max:255',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('show_event_modal', true);
+        }
 
         $event = Event::findOrFail($id);
 
@@ -303,7 +318,9 @@ class EventController extends Controller
                     ->where('custom_field_id', $field->id)
                     ->first();
                 if (!$existingValue) {
-                    return back()->withErrors([$key => 'This field is required.']);
+                    return back()
+                        ->withErrors([$key => $field->name . ' is required.'])
+                        ->withInput();
                 }
             }
         }

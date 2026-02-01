@@ -47,7 +47,7 @@
         @foreach($timeSlots as $slotIndex => $time)
             <div class="week-row">
                 <div class="time-slot-label">
-                    {{ \Carbon\Carbon::createFromFormat('H:i', $time)->format('g A') }}
+                    {{ \Carbon\Carbon::createFromFormat('H:i', $time)->format('H:i') }}
                 </div>
 
                 @foreach($weekDays as $dayIndex => $day)
@@ -178,9 +178,9 @@
                                class="week-event event-venue-color {{ $statusClass }} view-event-btn"
                                data-event-id="{{ $event->id }}"
                                    style="{{ $backgroundStyle }} top: {{ $topPosition }}px; height: {{ $totalHeight }}px; left: {{ $leftPercent }}%; width: {{ $widthPercent }}%; right: auto;"
-                                   title="{{ $event->title }} ({{ $event->start_datetime->format('g:i A') }} - {{ $event->end_datetime->format('g:i A') }}) - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
+                                   title="{{ $event->title }} ({{ $event->start_datetime->format('H:i') }} - {{ $event->end_datetime->format('H:i') }}) - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
                                     <div style="padding-top: {{ $setupMinutes }}px; height: 100%; box-sizing: border-box;">
-                                        <span class="event-time">{{ $event->start_datetime->format('g:i A') }}</span>
+                                        <span class="event-time">{{ $event->start_datetime->format('H:i') }}</span>
                                         <span class="event-title">{{ Str::limit($event->title, $position['totalColumns'] > 1 ? 15 : 25) }}</span>
                                     </div>
                                 </a>

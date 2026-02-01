@@ -17,9 +17,9 @@ class CreateVenuesTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->string('color', 7)->default('#3c8dbc');
             $table->integer('capacity')->nullable();
             $table->json('features')->nullable();
-            $table->string('color', 7)->default('#3c8dbc')->after('description');
             $table->json('custom_fields')->nullable();
             $table->timestamps();
         });

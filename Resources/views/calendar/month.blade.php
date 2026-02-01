@@ -1,5 +1,5 @@
 <div class="calendar-grid">
-    @foreach(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $day)
+    @foreach(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $day)
         <div class="calendar-day-header">{{ $day }}</div>
     @endforeach
 
@@ -16,8 +16,8 @@
                    class="calendar-event event-venue-color {{ $statusClass }} view-event-btn"
                    data-event-id="{{ $event->id }}"
                    style="background-color: {{ $venueColor }};"
-                   title="{{ $event->title }} - {{ $event->start_datetime->format('g:i A') }} - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
-                    {{ $event->start_datetime->format('g:i A') }} - {{ $event->title }}
+                   title="{{ $event->title }} - {{ $event->start_datetime->format('H:i') }} - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
+                    {{ $event->start_datetime->format('H:i') }} - {{ $event->title }}
                 </a>
             @endforeach
         </div>

@@ -73,11 +73,11 @@ class CalendarController extends Controller
         $startOfMonth = $date->copy()->startOfMonth();
         $endOfMonth = $date->copy()->endOfMonth();
         
-        // Get start of calendar (Sunday of the week containing the 1st)
-        $startOfCalendar = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
+        // Get start of calendar (Monday of the week containing the 1st)
+        $startOfCalendar = $startOfMonth->copy()->startOfWeek(Carbon::MONDAY);
         
-        // Get end of calendar (Saturday of the week containing the last day)
-        $endOfCalendar = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
+        // Get end of calendar (Sunday of the week containing the last day)
+        $endOfCalendar = $endOfMonth->copy()->endOfWeek(Carbon::SUNDAY);
         
         // Get all events for this period with filters
         $eventsQuery = Event::with('venue')

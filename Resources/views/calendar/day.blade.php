@@ -45,7 +45,7 @@
     {{-- Time slots --}}
     @foreach($timeSlots as $slotIndex => $time)
         <div class="day-row">
-            <div class="time-slot-label">{{ \Carbon\Carbon::createFromFormat('H:i', $time)->format('g A') }}</div>
+            <div class="time-slot-label">{{ \Carbon\Carbon::createFromFormat('H:i', $time)->format('H:i') }}</div>
             
             <div class="time-slot-cell {{ $isToday ? 'today' : '' }}">
                 @if($slotIndex === 0)
@@ -174,10 +174,10 @@
                            class="day-event event-venue-color {{ $statusClass }} view-event-btn"
                            data-event-id="{{ $event->id }}"
                            style="{{ $backgroundStyle }} top: {{ $topPosition }}px; height: {{ $totalHeight }}px; left: {{ $leftPercent }}%; width: {{ $widthPercent }}%; right: auto;"
-                           title="{{ $event->title }} ({{ $event->start_datetime->format('g:i A') }} - {{ $event->end_datetime->format('g:i A') }}) - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
+                           title="{{ $event->title }} ({{ $event->start_datetime->format('H:i') }} - {{ $event->end_datetime->format('H:i') }}) - {{ $event->venue ? $event->venue->name : 'No Venue' }}">
                             <div style="padding-top: {{ $setupMinutes }}px; height: 100%; box-sizing: border-box;">
                                 <span class="event-time">
-                                    {{ $event->start_datetime->format('g:i A') }} - {{ $event->end_datetime->format('g:i A') }}
+                                    {{ $event->start_datetime->format('H:i') }} - {{ $event->end_datetime->format('H:i') }}
                                 </span>
                                 <span class="event-title">{{ $event->title }}</span>
                                 @if($event->venue && $totalHeight > 40 && $position['totalColumns'] <= 2)
