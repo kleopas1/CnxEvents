@@ -242,6 +242,20 @@ class EventController extends Controller
         // Convert checkbox value to boolean
         $request->merge(['all_day' => $request->has('all_day')]);
         
+        // Remove empty datetime fields BEFORE validation to prevent timezone/TIMESTAMP issues
+        // Empty strings can cause MySQL TIMESTAMP columns to auto-update to current time
+        $cleanedInput = $request->all();
+        $datetimeFields = ['start_datetime', 'end_datetime', 'setup_datetime', 'venue_release_datetime', 'start_date', 'end_date'];
+        foreach ($datetimeFields as $field) {
+            if (array_key_exists($field, $cleanedInput) && 
+                ($cleanedInput[$field] === '' || $cleanedInput[$field] === null)) {
+                unset($cleanedInput[$field]);
+            }
+        }
+        
+        // Replace request input with cleaned data
+        $request->replace($cleanedInput);
+        
         $validator = \Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -268,52 +282,69 @@ class EventController extends Controller
 
         $event = Event::findOrFail($id);
 
-        // Prepare event data (exclude custom fields)
-        $data = $request->except(array_map(function($field) {
-            return 'custom_field_' . $field->id;
-        }, CustomField::all()->all()));
-        
-        // Remove empty datetime fields from $data to prevent MySQL TIMESTAMP columns from auto-updating
-        // This is crucial because TIMESTAMP columns can auto-update to CURRENT_TIMESTAMP on empty strings
-        $datetimeFields = ['start_datetime', 'end_datetime', 'setup_datetime', 'venue_release_datetime', 'start_date', 'end_date'];
-        foreach ($datetimeFields as $field) {
-            if (isset($data[$field]) && empty($data[$field])) {
-                unset($data[$field]);
-            }
-        }
+        // Prepare event data (exclude custom fields and internal fields)
+        $data = $request->except(array_merge(
+            ['_token', '_method', 'redirect_to'],
+            array_map(function($field) {
+                return 'custom_field_' . $field->id;
+            }, CustomField::all()->all())
+        ));
         
         // Handle all day events
         if ($request->filled('all_day') && $request->all_day) {
             // For all day events, use date inputs and set specific times
-            $data['start_datetime'] = ($request->start_date ?: $request->start_datetime) . ' 00:01:00';
-            $data['end_datetime'] = ($request->end_date ?: $request->end_datetime) . ' 23:59:00';
+            // Only use the date fields if they exist in the request
+            if ($request->has('start_date') && !empty($request->start_date)) {
+                $data['start_datetime'] = $request->start_date . ' 00:01:00';
+            } elseif ($request->has('start_datetime') && !empty($request->start_datetime)) {
+                $data['start_datetime'] = $request->start_datetime . ' 00:01:00';
+            } else {
+                // Don't update if neither field is provided
+                unset($data['start_datetime'], $data['start_date']);
+            }
+            
+            if ($request->has('end_date') && !empty($request->end_date)) {
+                $data['end_datetime'] = $request->end_date . ' 23:59:00';
+            } elseif ($request->has('end_datetime') && !empty($request->end_datetime)) {
+                $data['end_datetime'] = $request->end_datetime . ' 23:59:00';
+            } else {
+                // Don't update if neither field is provided
+                unset($data['end_datetime'], $data['end_date']);
+            }
+            
             $data['setup_datetime'] = null;
             $data['venue_release_datetime'] = null;
         } else {
             // Convert datetime-local format (YYYY-MM-DDTHH:MM) to MySQL format (YYYY-MM-DD HH:MM:SS)
-            // Only update if the field is actually filled (not empty string)
-            if ($request->filled('start_datetime')) {
+            // Only update if the field is actually filled and not empty
+            if ($request->has('start_datetime') && !empty($request->start_datetime)) {
                 $data['start_datetime'] = str_replace('T', ' ', $request->start_datetime) . ':00';
             } else {
                 // Don't include in update data, keep existing value
                 unset($data['start_datetime']);
             }
-            if ($request->filled('end_datetime')) {
+            
+            if ($request->has('end_datetime') && !empty($request->end_datetime)) {
                 $data['end_datetime'] = str_replace('T', ' ', $request->end_datetime) . ':00';
             } else {
                 unset($data['end_datetime']);
             }
-            if ($request->filled('setup_datetime')) {
+            
+            if ($request->has('setup_datetime') && !empty($request->setup_datetime)) {
                 $data['setup_datetime'] = str_replace('T', ' ', $request->setup_datetime) . ':00';
             } else {
                 unset($data['setup_datetime']);
             }
-            if ($request->filled('venue_release_datetime')) {
+            
+            if ($request->has('venue_release_datetime') && !empty($request->venue_release_datetime)) {
                 $data['venue_release_datetime'] = str_replace('T', ' ', $request->venue_release_datetime) . ':00';
             } else {
                 unset($data['venue_release_datetime']);
             }
         }
+        
+        // Remove any remaining date helper fields that shouldn't be in the model
+        unset($data['start_date'], $data['end_date']);
 
         $event->update($data);
 
