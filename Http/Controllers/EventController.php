@@ -273,6 +273,15 @@ class EventController extends Controller
             return 'custom_field_' . $field->id;
         }, CustomField::all()->all()));
         
+        // Remove empty datetime fields from $data to prevent MySQL TIMESTAMP columns from auto-updating
+        // This is crucial because TIMESTAMP columns can auto-update to CURRENT_TIMESTAMP on empty strings
+        $datetimeFields = ['start_datetime', 'end_datetime', 'setup_datetime', 'venue_release_datetime', 'start_date', 'end_date'];
+        foreach ($datetimeFields as $field) {
+            if (isset($data[$field]) && empty($data[$field])) {
+                unset($data[$field]);
+            }
+        }
+        
         // Handle all day events
         if ($request->filled('all_day') && $request->all_day) {
             // For all day events, use date inputs and set specific times
@@ -282,17 +291,27 @@ class EventController extends Controller
             $data['venue_release_datetime'] = null;
         } else {
             // Convert datetime-local format (YYYY-MM-DDTHH:MM) to MySQL format (YYYY-MM-DD HH:MM:SS)
+            // Only update if the field is actually filled (not empty string)
             if ($request->filled('start_datetime')) {
                 $data['start_datetime'] = str_replace('T', ' ', $request->start_datetime) . ':00';
+            } else {
+                // Don't include in update data, keep existing value
+                unset($data['start_datetime']);
             }
             if ($request->filled('end_datetime')) {
                 $data['end_datetime'] = str_replace('T', ' ', $request->end_datetime) . ':00';
+            } else {
+                unset($data['end_datetime']);
             }
             if ($request->filled('setup_datetime')) {
                 $data['setup_datetime'] = str_replace('T', ' ', $request->setup_datetime) . ':00';
+            } else {
+                unset($data['setup_datetime']);
             }
             if ($request->filled('venue_release_datetime')) {
                 $data['venue_release_datetime'] = str_replace('T', ' ', $request->venue_release_datetime) . ':00';
+            } else {
+                unset($data['venue_release_datetime']);
             }
         }
 
