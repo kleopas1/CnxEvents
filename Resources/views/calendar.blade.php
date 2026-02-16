@@ -4,7 +4,11 @@
 
 @section('stylesheets')
 <style>
-.calendar-container { margin-top: 20px; }
+.calendar-container { 
+    margin-top: 20px; 
+    width: 100%;
+    max-width: 100%;
+}
 .calendar-header { 
     display: flex; 
     justify-content: space-between; 
@@ -20,10 +24,12 @@
 .calendar-view-switcher .btn { padding: 6px 12px; }
 .calendar-grid { 
     display: grid; 
-    grid-template-columns: repeat(7, 1fr); 
+    grid-template-columns: repeat(7, minmax(0, 1fr)); 
     gap: 1px; 
     background: #ddd;
     border: 1px solid #ddd;
+    width: 100%;
+    table-layout: fixed;
 }
 .calendar-day-header {
     background: #3c8dbc;
@@ -31,12 +37,15 @@
     padding: 10px;
     text-align: center;
     font-weight: 600;
+    min-width: 0;
 }
 .calendar-day {
     background: white;
     min-height: 120px;
     padding: 8px;
     position: relative;
+    min-width: 0;
+    overflow: hidden;
 }
 .calendar-day.other-month { background: #f9f9f9; opacity: 0.6; }
 .calendar-day.today { background: #e3f2fd; }
@@ -46,6 +55,7 @@
     margin-bottom: 5px;
 }
 .calendar-event {
+    display: block;
     background: #3c8dbc;
     color: white;
     padding: 4px 6px;
@@ -56,8 +66,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 100%;
+    line-height: 1.3;
 }
-.calendar-event:hover { background: #2e6da4; text-decoration: none; color: white; }
+.calendar-event:hover { 
+    background: #2e6da4; 
+    text-decoration: none; 
+    color: white;
+}
 .legend { 
     margin-top: 15px; 
     padding: 15px;
