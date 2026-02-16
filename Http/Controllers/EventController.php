@@ -246,6 +246,7 @@ class EventController extends Controller
         // Empty strings can cause MySQL TIMESTAMP columns to auto-update to current time
         $cleanedInput = $request->all();
         $datetimeFields = ['start_datetime', 'end_datetime', 'setup_datetime', 'venue_release_datetime', 'start_date', 'end_date'];
+        
         foreach ($datetimeFields as $field) {
             if (array_key_exists($field, $cleanedInput) && 
                 ($cleanedInput[$field] === '' || $cleanedInput[$field] === null)) {

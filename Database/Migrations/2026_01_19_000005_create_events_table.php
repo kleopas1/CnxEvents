@@ -17,10 +17,10 @@ class CreateEventsTable extends Migration
             $table->increments('id');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->timestamp('start_datetime');
-            $table->timestamp('end_datetime');
-            $table->timestamp('setup_datetime')->nullable();
-            $table->timestamp('venue_release_datetime')->nullable();
+            $table->dateTime('start_datetime');
+            $table->dateTime('end_datetime');
+            $table->dateTime('setup_datetime')->nullable();
+            $table->dateTime('venue_release_datetime')->nullable();
             $table->boolean('all_day')->default(false);
             $table->unsignedInteger('venue_id');
             $table->enum('status', ['request', 'confirmed'])->default('request');
