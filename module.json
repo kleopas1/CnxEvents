@@ -5,7 +5,7 @@
     "version": "2.0.5",
     "img": "https://cyntrix.ai/assets/images/logo.png",
     "latestVersionUrl": "https://raw.githubusercontent.com/kleopas1/CnxEvents/refs/heads/main/module.json",
-    "latestVersionZipUrl": "https://github.com/kleopas1/CnxEvents/archive/refs/heads/main.zip",
+    "latestVersionZipUrl": "https://github.com/kleopas1/CnxEvents/releases/download/latest/CnxEvents.zip",
     "detailsUrl": "",
     "author": "Cyntrix Ltd",
     "authorUrl": "https://cyntrix.net",

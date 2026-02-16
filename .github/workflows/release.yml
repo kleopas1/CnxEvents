@@ -1,0 +1,52 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: CnxEvents
+      
+      - name: Get version from module.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.version' CnxEvents/module.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+      
+      - name: Create zip with proper folder structure
+        run: |
+          zip -r CnxEvents.zip CnxEvents -x "*.git*"
+      
+      - name: Delete existing latest release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Try to delete the 'latest' release if it exists
+          gh release delete latest --yes --repo ${{ github.repository }} || true
+          # Delete the 'latest' tag if it exists
+          git push --delete origin latest || true
+        continue-on-error: true
+      
+      - name: Create or Update Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "Latest Release (v${{ steps.get_version.outputs.version }})"
+          body: |
+            Automated release for version ${{ steps.get_version.outputs.version }}
+            
+            This release is automatically created when changes are pushed to the main branch.
+          files: CnxEvents.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
