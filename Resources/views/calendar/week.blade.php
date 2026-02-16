@@ -23,7 +23,7 @@
                         @php
                             $venueColor = $event->venue->color ?? '#3c8dbc';
                             if ($event->status === 'request') {
-                                $bgStyle = "background: repeating-linear-gradient(45deg, {$venueColor}, {$venueColor} 10px, rgba(255,255,255,0.3) 10px, rgba(255,255,255,0.3) 20px);";
+                                $bgStyle = "background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.3) 10px, rgba(255,255,255,0.3) 20px), {$venueColor};";
                             } else {
                                 $bgStyle = "background-color: {$venueColor};";
                             }
