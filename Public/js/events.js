@@ -1,4 +1,142 @@
 // Events page JavaScript
+let endAutoSyncEnabledByMode = {
+    datetime: true,
+    allDay: true
+};
+let isProgrammaticEndUpdate = false;
+
+function getCurrentMode() {
+    const allDayCheckbox = document.getElementById('all_day');
+    return allDayCheckbox && allDayCheckbox.checked ? 'allDay' : 'datetime';
+}
+
+function getStartEndFields() {
+    const form = document.getElementById('eventForm');
+    if (!form) {
+        return {
+            startField: null,
+            endField: null
+        };
+    }
+
+    const allDayCheckbox = document.getElementById('all_day');
+    const isAllDay = allDayCheckbox && allDayCheckbox.checked;
+
+    return {
+        startField: form.querySelector(`input[name="${isAllDay ? 'start_date' : 'start_datetime'}"]`),
+        endField: form.querySelector(`input[name="${isAllDay ? 'end_date' : 'end_datetime'}"]`)
+    };
+}
+
+function syncEndWithStartIfNeeded(forceSync) {
+    const force = !!forceSync;
+    const mode = getCurrentMode();
+    const fields = getStartEndFields();
+    const startField = fields.startField;
+    const endField = fields.endField;
+
+    if (!startField || !endField || !startField.value) {
+        return;
+    }
+
+    if (!force && !endAutoSyncEnabledByMode[mode] && endField.value) {
+        return;
+    }
+
+    isProgrammaticEndUpdate = true;
+    endField.value = startField.value;
+    isProgrammaticEndUpdate = false;
+}
+
+function disableEndAutoSyncOnManualChange() {
+    if (isProgrammaticEndUpdate) {
+        return;
+    }
+
+    const mode = getCurrentMode();
+
+    const fields = getStartEndFields();
+    const startField = fields.startField;
+    const endField = fields.endField;
+
+    if (!startField || !endField) {
+        return;
+    }
+
+    if (endField.value !== startField.value) {
+        endAutoSyncEnabledByMode[mode] = false;
+    }
+}
+
+function initializeStartEndAutoSync() {
+    const form = document.getElementById('eventForm');
+    if (!form) {
+        return;
+    }
+
+    const startDatetime = form.querySelector('input[name="start_datetime"]');
+    const endDatetime = form.querySelector('input[name="end_datetime"]');
+    const startDate = form.querySelector('input[name="start_date"]');
+    const endDate = form.querySelector('input[name="end_date"]');
+
+    if (startDatetime) {
+        startDatetime.addEventListener('input', function() {
+            syncEndWithStartIfNeeded(false);
+        });
+        startDatetime.addEventListener('change', function() {
+            syncEndWithStartIfNeeded(false);
+        });
+    }
+
+    if (startDate) {
+        startDate.addEventListener('input', function() {
+            syncEndWithStartIfNeeded(false);
+        });
+        startDate.addEventListener('change', function() {
+            syncEndWithStartIfNeeded(false);
+        });
+    }
+
+    if (endDatetime) {
+        endDatetime.addEventListener('input', disableEndAutoSyncOnManualChange);
+        endDatetime.addEventListener('change', disableEndAutoSyncOnManualChange);
+    }
+
+    if (endDate) {
+        endDate.addEventListener('input', disableEndAutoSyncOnManualChange);
+        endDate.addEventListener('change', disableEndAutoSyncOnManualChange);
+    }
+
+    // Delegated handlers make this resilient even if modal/form nodes are re-rendered.
+    form.addEventListener('input', function(e) {
+        if (!e.target || !e.target.name) {
+            return;
+        }
+
+        if (e.target.name === 'start_datetime' || e.target.name === 'start_date') {
+            syncEndWithStartIfNeeded(false);
+        }
+
+        if (e.target.name === 'end_datetime' || e.target.name === 'end_date') {
+            disableEndAutoSyncOnManualChange();
+        }
+    });
+
+    form.addEventListener('change', function(e) {
+        if (!e.target || !e.target.name) {
+            return;
+        }
+
+        if (e.target.name === 'start_datetime' || e.target.name === 'start_date') {
+            syncEndWithStartIfNeeded(false);
+        }
+
+        if (e.target.name === 'end_datetime' || e.target.name === 'end_date') {
+            disableEndAutoSyncOnManualChange();
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Check if we need to reopen the modal after validation error
     const container = document.querySelector('[data-reopen-modal="true"]');
@@ -125,6 +263,10 @@ function resetForm() {
     // Reset form
     form.reset();
 
+    // Re-enable start/end auto-sync for new events
+    endAutoSyncEnabledByMode.datetime = true;
+    endAutoSyncEnabledByMode.allDay = true;
+
     // Clear any error messages
     const errorElements = form.querySelectorAll('.text-danger');
     errorElements.forEach(el => el.remove());
@@ -212,6 +354,10 @@ function editEvent(id) {
         // Update datetime fields visibility
         toggleDatetimeFields();
 
+        // Keep existing start/end values in edit mode unless changed explicitly
+        endAutoSyncEnabledByMode.datetime = false;
+        endAutoSyncEnabledByMode.allDay = false;
+
         // Show modal
         $('#eventModal').modal('show');
     })
@@ -248,6 +394,9 @@ function toggleDatetimeFields() {
         if (setupReleaseFields) {
             setupReleaseFields.style.display = 'none';
         }
+
+        // For all-day mode, initialize end date from start date when applicable.
+        syncEndWithStartIfNeeded(true);
     } else {
         // Show datetime inputs, hide date inputs
         datetimeFields.forEach(field => {
@@ -270,6 +419,9 @@ function toggleDatetimeFields() {
         if (setupReleaseFields) {
             setupReleaseFields.style.display = 'flex';
         }
+
+        // Keep end aligned with start only while auto-sync is still active
+        syncEndWithStartIfNeeded(false);
     }
 }
 
@@ -282,6 +434,9 @@ document.addEventListener('DOMContentLoaded', function() {
         allDayCheckbox.addEventListener('change', toggleDatetimeFields);
         toggleDatetimeFields(); // Initial state
     }
+
+    initializeStartEndAutoSync();
+    syncEndWithStartIfNeeded(false);
 
     // Check if we need to reopen the modal after validation error
     // This is set by the controller when redirecting back with errors
